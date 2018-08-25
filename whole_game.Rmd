@@ -117,4 +117,24 @@ houston %>%
 * What's driving this trend?
 * What happened around 2010?
 
-##
+## Extend to all cities
+
+```{r}
+by_area <- permits_big %>% 
+  group_by(area) %>% 
+  nest()
+
+area_model <- function(df){
+  lm(log10(f1units +1) ~ factor(month), data = df)
+}
+
+detrended <- by_area %>% mutate(
+  model = map(data, area_model),
+  resids = map2(data, model, add_residuals)
+) %>% unnest(resids)
+
+ggplot(detrended, aes(date, resid)) +
+  geom_line(aes(group = area), alpha = 1/10) +
+  geom_smooth(se = FALSE)
+
+```
