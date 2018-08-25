@@ -3,3 +3,83 @@ title: "Whole Game"
 output: html_notebook
 ---
 
+```{r setup}
+library(tidyverse)
+```
+
+##Data import
+```{r}
+permit_raws <- read_csv("dataPermit_full.csv", na = "null")
+permit_raws
+```
+
+* area = metropolitan standar area
+* date = month/year (character vector or strings)
+* f1 = 1 family house, f24  = 2-4 families, f5 = 5+ family house
+* units = number of buidings, change in units; value = average value of building; valchange = change in value
+
+
+```{r}
+permits <- permit_raws %>% 
+  separate(date, c("month", "year"), "/", convert = TRUE) %>% 
+  filter(year > 2007) %>% 
+  select(-ends_with("change"))
+permits
+```
+
+
+## Basic EDA
+
+```{r}
+permits %>% count(year)
+permits %>% count(area)
+permits %>% count(area) %>% count(n)
+```
+
+I'm focus on sigle family home
+
+```{r}
+permits <- permits %>% 
+  mutate(date = year + (month - 1) / 12 )
+
+ggplot(permits, aes(date, f1units)) +
+  geom_line(aes (group = area))
+```
+
+
+## Focus
+
+Focus on big cities. Maybe bias our data because big cities are different from small cities?
+
+```{r}
+f1units <- permits %>%
+  group_by(area) %>% 
+  summarise(mean = mean(f1units)) %>% 
+  arrange(desc(mean))
+f1units
+
+f1units %>% filter(mean > 100)
+
+permits_big <- permits %>% 
+  semi_join(f1units %>% filter(mean > 100))
+permits_big
+```
+
+```{r}
+ggplot(permits_big, aes(date, f1units)) +
+  geom_line(aes(group = area))
+
+ggplot(permits_big, aes(date, f1units)) +
+  geom_line(aes(group = area), alpha = 1/10)
+
+ggplot(permits_big, aes(date, f1units)) +
+  geom_line(aes(group = area), alpha = 1/10) +
+  scale_y_log10() +
+  geom_smooth(se = FALSE)
+
+```
+
+## Model
+
+
+
