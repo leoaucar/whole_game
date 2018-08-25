@@ -81,5 +81,40 @@ ggplot(permits_big, aes(date, f1units)) +
 
 ## Model
 
+```{r}
+houston <- permits %>% filter(str_detect(area, "Houston"))
+houston %>% count(area)
 
+ggplot(houston, aes(date, f1units)) +
+  geom_line(aes(group = area))
 
+ggplot(houston, aes(month, f1units)) +
+  geom_line(aes(group = year)) +
+  scale_y_log10()
+```
+
+Questions:
+* Is this pattern the same everywhere?
+* What drives it? is it the weather?
+* Houston in July is less pleasant than Houston Dec
+
+```{r}
+library(modelr)
+
+houston_mod <- lm(log(f1units) ~ factor(month), data = houston)
+
+houston %>% 
+  add_predictions(houston_mod) %>% 
+  ggplot(aes(date, pred)) +
+  geom_line()
+
+houston %>% 
+  add_residuals(houston_mod) %>% 
+  ggplot(aes(date, resid)) +
+  geom_line()
+```
+
+* What's driving this trend?
+* What happened around 2010?
+
+##
